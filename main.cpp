@@ -8,13 +8,18 @@ using namespace std;
 int main(){
     Cloud c(234, 300, 234);
 
+
     for(int angle : {0})
         for(int foto = 0; foto < 100; foto += 10){
             string path = IMGSOURCE+to_string(angle)+"/"+to_string(foto)+".pbm";
             c.crop(path, foto*3.6, -angle);
             cout << angle << ": " << foto << endl;
         }
-    c.write();
-   
+   // c.write();
+    c.findFaces();
+    Mesh m(c.vertex);
+
+    m.writeMesh();
+ 
     return 0;    
 }

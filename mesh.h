@@ -1,5 +1,3 @@
-#include"points.h"
-#include"foto.h"
 #include<vector>
 #include<fstream>
 #include<istream>
@@ -26,5 +24,15 @@ class Mesh{
             }
         }
 
+        void writeMesh(){
+            for(Point* p : vertex)
+                fout << "v " << p->x << " " << p->y << " " << p->z << endl;
+            for(int i = 0; i < faces.size(); i+=4){
+                fout << "f";
+                for(int j = 0; j < 4; j++)
+                    fout << " " << faces[i+j];
+                fout << endl;
+            }
+        }
 
 };
