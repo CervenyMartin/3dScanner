@@ -5,6 +5,23 @@
 #include<istream>
 using namespace std;
 ofstream fout("points.obj");
+
+/*                                             7______________6
+    ^ y                                       /.      1      /|
+    |                                        / .            / |
+    |                                       4--.-----------5  |
+    |     z                                 | 3.       5   | 2|
+    |   /                                   |  .   4       |  |
+    |  /                                    |  3...........|..2
+    | /                                     | .      0     | /
+    |/                                      |.             |/
+    --------------> x                       0--------------1
+
+*/
+
+
+
+
 class Cloud{
     private:
         vector<Point> pc;
@@ -35,17 +52,7 @@ class Cloud{
             }
             
         }
-        int getID(int x, int y, int z){
-            int id = 0;
-            id += x*sizeY*sizeZ;
-            id += y*sizeZ;
-            id += z;
-            return id;
-        }
-        Point& getPoint(int id){
-            return pc[id];
-        }
-        
+
         void write(){
             float rx=45;
             for (Point p : pc){

@@ -29,3 +29,22 @@ class Point{
         }
 
 };
+
+class Tripple{
+    public:
+        int first, second, third;
+        Tripple(int a, int b, int c){
+            first = a; second = b; third = c;
+        }
+        int minimum(){
+            return std::min(std::min(first, second), third);
+        }
+};
+
+class Foursome{
+    public:
+        int one, two, three, four;
+        Foursome(int a, int b, int c, int d){
+            one = a; two = b; three = c; four = d;
+        }
+};
