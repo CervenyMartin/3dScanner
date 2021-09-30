@@ -68,6 +68,13 @@ class Cloud{
         int coord2index(int X, int Y, int Z){
             return X*sizeY*sizeZ + Y*sizeZ + Z;
         }
+        bool isEdge(int X, int Y, int Z){
+            if (min(min(sizeX-X,sizeY-Y),sizeZ-Z)==0)
+                return true;
+            if (min(X, min(Y, Z))==-1)
+                return true;
+            return false;
+        }
 
 
         void findFaces(){
@@ -76,7 +83,7 @@ class Cloud{
                 if(p.getPointValue())
                     for(int i = 0; i < 6; i++){
                             neighbourIndex = coord2index(p.x+get<0>(SITES_INDEXES[i]), p.y+get<1>(SITES_INDEXES[i]), p.z+get<2>(SITES_INDEXES[i]));
-                            if(!pc[neighbourIndex].getPointValue()){
+                            if(isEdge(p.x+get<0>(SITES_INDEXES[i]), p.y+get<1>(SITES_INDEXES[i]), p.z+get<2>(SITES_INDEXES[i])) || !pc[neighbourIndex].getPointValue()){
                                 for (tuple<float, float, float> bod : SITES_VERTES[i]){
                                     vertex.push_back({get<0>(bod)+p.x, get<1>(bod)+p.y, get<2>(bod)+p.z});
                                 }
@@ -114,6 +121,26 @@ class Mesh{
                 faces.push_back(mp.find(p)->second);
             }
         }
+
+        void setSmoothVectors(){
+            for(int i = 0; i < faces.size(); i+= 4){
+                for(int j = 0; j < 4; j++){
+                    vertex[faces[i+j]-1]->addSmoothVector({vertex[faces[i+(j+1)%4]-1]->x,vertex[faces[i+(j+1)%4]-1]->y,vertex[faces[i+(j+1)%4]-1]->z});
+                    vertex[faces[i+j]-1]->addSmoothVector({vertex[faces[i+(j+3)%4]-1]->x,vertex[faces[i+(j+3)%4]-1]->y,vertex[faces[i+(j+3)%4]-1]->z});
+                }
+            }
+
+        }
+
+        void smoothMesh(){
+            for(Point* p : vertex)
+                p->inicializeSmoothVector();
+
+            setSmoothVectors();
+            for(Point* p : vertex)
+                p->moveBySmoothVector();
+        }
+
 
         void writeMesh(){
             for(Point* p : vertex)

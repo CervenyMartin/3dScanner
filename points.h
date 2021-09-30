@@ -1,7 +1,10 @@
 #include <math.h>
+#include <tuple>
+using namespace std;
 class Point{
     private:
         bool active = 1;
+        tuple<float, float, float> smoothVector = {0,0,0};
     public:
         float x, y, z;
         Point(float a, float b, float c){
@@ -27,24 +30,20 @@ class Point{
             newZ = -(y-axisY) * sin(alpha) + (z-axisZ) * cos(alpha);
             return Point(x, newY+axisY, newZ+axisZ);
         }
+        void addSmoothVector(tuple<float,float,float> v){ /// v neni vektor, ale koncovy bod vektoru, pocatecni je volany bod!!!
+            get<0>(smoothVector) += get<0>(v)-x;
+            get<1>(smoothVector) += get<1>(v)-y;
+            get<2>(smoothVector) += get<2>(v)-z;
+        }
+
+        void moveBySmoothVector(){
+            x += get<0>(smoothVector)/100;
+            y += get<1>(smoothVector)/100;
+            z += get<2>(smoothVector)/100;
+        }
+        void inicializeSmoothVector(){
+            smoothVector = {0,0,0};
+        }
 
 };
 
-class Tripple{
-    public:
-        int first, second, third;
-        Tripple(int a, int b, int c){
-            first = a; second = b; third = c;
-        }
-        int minimum(){
-            return std::min(std::min(first, second), third);
-        }
-};
-
-class Foursome{
-    public:
-        int one, two, three, four;
-        Foursome(int a, int b, int c, int d){
-            one = a; two = b; three = c; four = d;
-        }
-};
