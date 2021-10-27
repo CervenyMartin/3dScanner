@@ -18,6 +18,7 @@ def rmbg(angle, picture):
                     print(0, file=f, end='')
                 else: print(1, file=f,end='')
         f.close()
+
 for a in range(0,61,20):
     print(f"angle {a}:")
     for i in range(0,101):

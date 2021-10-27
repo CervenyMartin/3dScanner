@@ -5,7 +5,8 @@
 #include<istream>
 #include<tuple>
 #include<map>
-#define ANGLE_OF_CAMERA 30
+#define ANGLE_OF_CAMERA 0.131097363
+//#define ANGLE_OF_CAMERA2 0.167459963
 using namespace std;
 ofstream fout("points.obj");
 
@@ -38,6 +39,7 @@ class Cloud{
     private:
         int sizeX, sizeY, sizeZ;
         int centerX, centerY, centerZ;
+        int Cx,Cy,Cz; // camera x, y & z
     public:
         vector<Point> pc;
         vector<tuple<float, float, float> > vertex;
@@ -52,6 +54,8 @@ class Cloud{
             centerZ = int(z/2);
 
             sizeX = x; sizeY = y; sizeZ = z;
+
+            Cx=centerX; Cy=centerY; Cz=Cx/tan(ANGLE_OF_CAMERA);
         }
 
         void crop(string picture, float angleY, float angleX){
@@ -60,6 +64,8 @@ class Cloud{
             for(Point& p : pc){
                 q = p.rotatedY(angleY, centerX, centerZ);
                 q = q.rotatedX(angleX, centerY, centerZ);
+                q.x = Cx-(Cz/(Cz-q.z)*(Cx-q.x));
+                q.y = Cy-(Cz/(Cz-q.z)*(Cy-q.y));
                 if(!img.getBitValue(int(q.x),int(q.y)))
                     p.setPointValue(0);
             }
