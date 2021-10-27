@@ -5,6 +5,7 @@
 #include<istream>
 #include<tuple>
 #include<map>
+#define ANGLE_OF_CAMERA 30
 using namespace std;
 ofstream fout("points.obj");
 
