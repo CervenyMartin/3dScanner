@@ -5,7 +5,7 @@
 #include<istream>
 #include<tuple>
 #include<map>
-#define ANGLE_OF_CAMERA 0.131097363
+#define ANGLE_OF_CAMERA 0.145
 //#define ANGLE_OF_CAMERA2 0.167459963
 using namespace std;
 ofstream fout("points.obj");
@@ -102,7 +102,7 @@ class Cloud{
 
         }
 
-        /*void write(){
+        /*void write(){     // writes pc cloud
             float rx=45;
             for (Point p : pc){
                 if(p.getPointValue())

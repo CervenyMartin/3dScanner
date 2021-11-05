@@ -20,6 +20,6 @@ class Foto{
         }
          bool getBitValue(int x, int y){
             if(x < 0 || x > FOTOX-1 || y < 0 || y > FOTOY-1) return 0;
-            return img[y*FOTOX + x];
+            return img[y*(FOTOX) +x];
         }
 };
