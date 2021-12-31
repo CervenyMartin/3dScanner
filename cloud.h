@@ -5,6 +5,7 @@
 #include<istream>
 #include<tuple>
 #include<map>
+#include<queue>
 #define ANGLE_OF_CAMERA 0.145
 //#define ANGLE_OF_CAMERA2 0.167459963
 using namespace std;
@@ -21,10 +22,24 @@ ofstream fout("points.obj");
     |/                                      |.             |/
     --------------> x                       0--------------1
 
+
+
+
+    O                     
+                    |
+                  . |
+                __I_|
+                |   |
+                |   |
+
+
+
+    
+
 */
 
-const vector<tuple<int, int, int> >  SITES_INDEXES = { {0,-1,0}, {0,1,0}, {1,0,0}, {-1,0,0}, {0,0,-1}, {0,0,1} };
-const vector<vector<tuple<float, float, float> > > SITES_VERTES={
+const vector<position >  SITES_INDEXES = { {0,-1,0}, {0,1,0}, {1,0,0}, {-1,0,0}, {0,0,-1}, {0,0,1} };
+const vector<vector<position > > SITES_VERTICIES={
     { {-.5,-.5,-.5}, { .5,-.5,-.5}, { .5,-.5, .5}, {-.5,-.5, .5} }, //0
     { {-.5, .5,-.5}, { .5, .5,-.5}, { .5, .5, .5}, {-.5, .5, .5} }, //1
     { { .5,-.5,-.5}, { .5,-.5, .5}, { .5, .5, .5}, { .5, .5,-.5} }, //2
@@ -38,77 +53,117 @@ const vector<vector<tuple<float, float, float> > > SITES_VERTES={
 class Cloud{
     private:
         int sizeX, sizeY, sizeZ;
-        int centerX, centerY, centerZ;
-        int Cx,Cy,Cz; // camera x, y & z
+        position center;
+        position camera;
+        queue<Point*> points;
+        vector<vector<vector<bool> > > pointCloudModel;
     public:
-        vector<Point> pc;
-        vector<tuple<float, float, float> > vertex;
+        vector<position> vertex;
         Cloud(int x, int y, int z){
-            for(int a = 0; a < x; a++)
-                for(int b = 0; b < y; b++)
-                    for(int c = 0; c < z; c++)
-                        pc.push_back(Point(a,b,c));
+            sizeX = x; sizeY = y; sizeZ = z;    // storing size
+            center.x = int(x/2);            // calculating center of point cloud
+            center.y = int(y/2);
+            center.z = int(z/2);
+            // calculating position of camera
+            camera.x=center.x; camera.y=center.y; camera.z=camera.x/tan(ANGLE_OF_CAMERA);
+            for(int ix = 0; ix < x; ix++)       // pushing points into queue
+                for(int iy = 0; iy < y; iy++)
+                    for(int iz = 0; iz < z; iz++){
+                        Point* pointerP = new Point(ix,iy,iz);
+                        points.push(pointerP);
+                    }
             
-            centerX = int(x/2);
-            centerY = int(y/2);
-            centerZ = int(z/2);
+            pointCloudModel.resize(sizeX);  // initialize point cloud model
+            for (vector<vector<bool> >& v : pointCloudModel){
+                v.resize(sizeY);
+            for (vector<bool>& w : v)
+                w.resize(sizeZ,false);
+            }       
 
-            sizeX = x; sizeY = y; sizeZ = z;
-
-            Cx=centerX; Cy=centerY; Cz=Cx/tan(ANGLE_OF_CAMERA);
+            
+          
         }
 
         void crop(string picture, float angleY, float angleX){
+            Point* sep = new Point(-1,-1,-1);   // separator
             Foto img(picture);
-            Point q(0,0,0);
-            for(Point& p : pc){
-                q = p.rotatedY(angleY, centerX, centerZ);
-                q = q.rotatedX(angleX, centerY, centerZ);
-                q.x = Cx-(Cz/(Cz-q.z)*(Cx-q.x));
-                q.y = Cy-(Cz/(Cz-q.z)*(Cy-q.y));
-                if(!img.getBitValue(int(q.x),int(q.y)))
-                    p.setPointValue(0);
+            points.push(sep);
+    
+            while(points.front()!=sep){
+                pair<int,int> fotoPos = points.front()->project(center,camera,angleX,angleY); 
+                if(img.getBitValue(fotoPos.first,fotoPos.second)){
+                    points.push(points.front());
+                }
+                points.pop();
             }
-            
+            points.pop();
         }
 
-        int coord2index(int X, int Y, int Z){
-            return X*sizeY*sizeZ + Y*sizeZ + Z;
+
+        void markPTM(){
+            while (!points.empty()){
+                Point* p = points.front();
+                pointCloudModel[p->getPosition().x][p->getPosition().y][p->getPosition().z]=true;
+                points.pop();
+            }   
         }
-        bool isEdge(int X, int Y, int Z){
-            if (min(min(sizeX-X,sizeY-Y),sizeZ-Z)==0)
+
+
+        bool isOut(position pos){
+            if (min(min(sizeX-pos.x,sizeY-pos.y),sizeZ-pos.z)==0)
                 return true;
-            if (min(X, min(Y, Z))==-1)
+            if (min(pos.x, min(pos.y, pos.z))==-1)
                 return true;
             return false;
         }
 
+        int countOpositNeighbours(position where){
+            int count = 0;
+            for(int i = 0; i < 6; i++){
+                position neighbour = {where.x+SITES_INDEXES[i].x,
+                                      where.y+SITES_INDEXES[i].y,
+                                      where.z+SITES_INDEXES[i].z};
+                if (!isOut(neighbour) && !pointCloudModel[neighbour.x][neighbour.y][neighbour.z]==pointCloudModel[where.x][where.y][where.z])
+                    count+=1;
+                    
+            }
+            return count;
+        }
+
+        void solveSingleCubes(){
+            for (float ix = 0; ix < sizeX; ix++)
+                for (float iy = 0; iy < sizeY; iy++)
+                    for (float iz = 0; iz < sizeZ; iz++)
+                        if(countOpositNeighbours({ix,iy,iz})>=5){
+                            pointCloudModel[ix][iy][iz] = !pointCloudModel[ix][iy][iz];
+                            
+                        }
+        }
+
 
         void findFaces(){
-            int neighbourIndex;
-            for(Point p : pc)
-                if(p.getPointValue())
-                    for(int i = 0; i < 6; i++){
-                            neighbourIndex = coord2index(p.x+get<0>(SITES_INDEXES[i]), p.y+get<1>(SITES_INDEXES[i]), p.z+get<2>(SITES_INDEXES[i]));
-                            if(isEdge(p.x+get<0>(SITES_INDEXES[i]), p.y+get<1>(SITES_INDEXES[i]), p.z+get<2>(SITES_INDEXES[i])) || !pc[neighbourIndex].getPointValue()){
-                                for (tuple<float, float, float> bod : SITES_VERTES[i]){
-                                    vertex.push_back({get<0>(bod)+p.x, get<1>(bod)+p.y, get<2>(bod)+p.z});
+            markPTM();
+            for(int i = 0; i < 5; i++)
+            solveSingleCubes();
+                        
+            for (int ix = 0; ix < sizeX; ix++)
+                for (int iy = 0; iy < sizeY; iy++)
+                    for (int iz = 0; iz < sizeZ; iz++) 
+                        if (pointCloudModel[ix][iy][iz])
+                            for(int i = 0; i < 6; i++){
+                                position neighbour = {ix+SITES_INDEXES[i].x,
+                                                      iy+SITES_INDEXES[i].y,
+                                                      iz+SITES_INDEXES[i].z};
+                                
+                                if(isOut(neighbour) || !pointCloudModel[neighbour.x][neighbour.y][neighbour.z])
+                                  for (position bod : SITES_VERTICIES[i])
+                                        vertex.push_back({bod.x+ix, bod.y+iy, bod.z+iz});
+                                   
                                 }
-                            }
-                        
-                        
-                    }
-
+                            
 
         }
 
-        /*void write(){     // writes pc cloud
-            float rx=45;
-            for (Point p : pc){
-                if(p.getPointValue())
-                    fout << "v " << p.x << " " << p.y << " " << p.z << endl;
-            }
-        }*/
 };
 
 
@@ -117,23 +172,24 @@ class Mesh{
         map<tuple<float,float,float>, int> mp;
         vector<Point*> vertex;
         vector<int> faces;
-        Mesh(vector<tuple<float,float, float> >& src){
+        Mesh(vector<position>& src){
             int currentIndex = 1;
-            for(tuple<float,float,float> p: src){
-                if(mp.find(p)==mp.end()){
-                    mp.insert({p, currentIndex});
-                    vertex.push_back(new Point(get<0>(p),get<1>(p), get<2>(p)));
+            for(position p: src){
+                if(mp.find({p.x,p.y,p.z})==mp.end()){
+                    mp.insert({{p.x,p.y,p.z}, currentIndex});
+                    vertex.push_back(new Point(p.x,p.y,p.z));
                     currentIndex++;
                 }
-                faces.push_back(mp.find(p)->second);
+                faces.push_back(mp.find({p.x,p.y,p.z})->second);
             }
+
         }
 
         void setSmoothVectors(){
             for(int i = 0; i < faces.size(); i+= 4){
                 for(int j = 0; j < 4; j++){
-                    vertex[faces[i+j]-1]->addSmoothVector({vertex[faces[i+(j+1)%4]-1]->x,vertex[faces[i+(j+1)%4]-1]->y,vertex[faces[i+(j+1)%4]-1]->z});
-                    vertex[faces[i+j]-1]->addSmoothVector({vertex[faces[i+(j+3)%4]-1]->x,vertex[faces[i+(j+3)%4]-1]->y,vertex[faces[i+(j+3)%4]-1]->z});
+                    vertex[faces[i+j]-1]->addSmoothVector({vertex[faces[i+(j+1)%4]-1]->getPosition().x,vertex[faces[i+(j+1)%4]-1]->getPosition().y,vertex[faces[i+(j+1)%4]-1]->getPosition().z});
+                    vertex[faces[i+j]-1]->addSmoothVector({vertex[faces[i+(j+3)%4]-1]->getPosition().x,vertex[faces[i+(j+3)%4]-1]->getPosition().y,vertex[faces[i+(j+3)%4]-1]->getPosition().z});
                 }
             }
 
@@ -141,7 +197,7 @@ class Mesh{
 
         void smoothMesh(){
             for(Point* p : vertex)
-                p->inicializeSmoothVector();
+                p->resetSmoothVector();
 
             setSmoothVectors();
             for(Point* p : vertex)
@@ -150,8 +206,12 @@ class Mesh{
 
 
         void writeMesh(){
-            for(Point* p : vertex)
-                fout << "v " << p->x << " " << p->y << " " << p->z << endl;
+
+            cout << vertex.size() <<endl;
+            for(Point* p : vertex){
+                fout << "v " << p->getPosition().x << " " << p->getPosition().y << " " << p->getPosition().z << endl;
+               
+            }
             for(int i = 0; i < faces.size(); i+=4){
                 fout << "f";
                 for(int j = 0; j < 4; j++)
@@ -159,5 +219,6 @@ class Mesh{
                 fout << endl;
             }
         }
+        
 
 };
