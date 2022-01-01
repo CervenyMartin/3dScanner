@@ -5,6 +5,8 @@
         "deque": "cpp",
         "string": "cpp",
         "vector": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "iostream": "cpp",
+        "ostream": "cpp"
     }
 }
