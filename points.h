@@ -6,6 +6,7 @@ using namespace std;
 struct position{ float x,y,z;};
 
 
+
 class Point{
     private:
         bool active = 1;
@@ -13,7 +14,7 @@ class Point{
         position smoothVector = {0,0,0};
         
     public:
-        position color = {0,0,0};
+        position color = {135,95,15};
         Point(float x, float y, float z){
             coordinates = {x,y,z};
         }

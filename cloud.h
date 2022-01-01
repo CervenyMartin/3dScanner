@@ -6,10 +6,21 @@
 #include<tuple>
 #include<map>
 #include<queue>
-#define ANGLE_OF_CAMERA 0.145
-//#define ANGLE_OF_CAMERA2 0.167459963
+#include<set>
+
 using namespace std;
-ofstream fout("points.obj");
+
+#define CAMERA_X 117
+#define CAMERA_y 150
+#define CAMERA_Z 801.234
+#define SIZE_X 234
+#define SIZE_Y 300
+#define SIZE_Z 234
+
+position camera;
+position size;
+position center;
+ofstream fout("model.ply");
 
 /*                                             7______________6
     ^ y                                       /.      1      /|
@@ -49,35 +60,46 @@ const vector<vector<position > > SITES_VERTICIES={
 
 };
 
+struct cmp {
+    bool operator() (pair<Point*,int> a, pair<Point*,int> b) const {
+        return sqrt(
+                   pow(a.first->getPosition().x-camera.x,2)
+                +  pow(a.first->getPosition().y-camera.y,2)
+                +  pow(a.first->getPosition().z-camera.z,2)
+                ) > sqrt(pow(b.first->getPosition().x-camera.x,2)
+                +  pow(b.first->getPosition().y-camera.y,2)
+                +  pow(b.first->getPosition().z-camera.z,2)
+                );
+    }
+};
+
+
 
 class Cloud{
     private:
-        int sizeX, sizeY, sizeZ;
-        position center;
-        position camera;
         queue<Point*> points;
         vector<vector<vector<bool> > > pointCloudModel;
+        position camera;
+        position size;
+        position center;
     public:
         vector<position> vertex;
-        Cloud(int x, int y, int z){
-            sizeX = x; sizeY = y; sizeZ = z;    // storing size
-            center.x = int(x/2);            // calculating center of point cloud
-            center.y = int(y/2);
-            center.z = int(z/2);
-            // calculating position of camera
-            camera.x=center.x; camera.y=center.y; camera.z=camera.x/tan(ANGLE_OF_CAMERA);
-            for(int ix = 0; ix < x; ix++)       // pushing points into queue
-                for(int iy = 0; iy < y; iy++)
-                    for(int iz = 0; iz < z; iz++){
+        Cloud(){
+            camera={CAMERA_X,CAMERA_y,CAMERA_Z};
+            size={SIZE_X, SIZE_Y, SIZE_Z};
+            center={size.x/2,size.y/2,size.z/2};
+            for(int iy = 0; iy < size.y; iy++)       // pushing points into queue
+                for(int ix = 0; ix < size.x; ix++)
+                    for(int iz = 0; iz < size.z; iz++){
                         Point* pointerP = new Point(ix,iy,iz);
                         points.push(pointerP);
                     }
             
-            pointCloudModel.resize(sizeX);  // initialize point cloud model
+            pointCloudModel.resize(size.x);  // initialize point cloud model
             for (vector<vector<bool> >& v : pointCloudModel){
-                v.resize(sizeY);
+                v.resize(size.y);
             for (vector<bool>& w : v)
-                w.resize(sizeZ,false);
+                w.resize(size.z,false);
             }       
 
             
@@ -88,7 +110,6 @@ class Cloud{
             Point* sep = new Point(-1,-1,-1);   // separator
             Foto img(picture);
             points.push(sep);
-    
             while(points.front()!=sep){
                 pair<int,int> fotoPos = points.front()->project(center,camera,angleX,angleY); 
                 if(img.getBitValue(fotoPos.first,fotoPos.second)){
@@ -110,7 +131,7 @@ class Cloud{
 
 
         bool isOut(position pos){
-            if (min(min(sizeX-pos.x,sizeY-pos.y),sizeZ-pos.z)==0)
+            if (min(min(size.x-pos.x,size.y-pos.y),size.z-pos.z)==0)
                 return true;
             if (min(pos.x, min(pos.y, pos.z))==-1)
                 return true;
@@ -131,9 +152,9 @@ class Cloud{
         }
 
         void solveSingleCubes(){
-            for (float ix = 0; ix < sizeX; ix++)
-                for (float iy = 0; iy < sizeY; iy++)
-                    for (float iz = 0; iz < sizeZ; iz++)
+            for (float ix = 0; ix < size.x; ix++)
+                for (float iy = 0; iy < size.y; iy++)
+                    for (float iz = 0; iz < size.z; iz++)
                         if(countOpositNeighbours({ix,iy,iz})>=5){
                             pointCloudModel[ix][iy][iz] = !pointCloudModel[ix][iy][iz];
                             
@@ -142,13 +163,13 @@ class Cloud{
 
 
         void findFaces(){
+            cout << points.size() << endl;
+//            for(int i = 0; i < 5; i++)
+            //solveSingleCubes();
             markPTM();
-            for(int i = 0; i < 5; i++)
-            solveSingleCubes();
-                        
-            for (int ix = 0; ix < sizeX; ix++)
-                for (int iy = 0; iy < sizeY; iy++)
-                    for (int iz = 0; iz < sizeZ; iz++) 
+            for (int ix = 0; ix < size.x; ix++)
+                for (int iy = 0; iy < size.y; iy++)
+                    for (int iz = 0; iz < size.z; iz++) 
                         if (pointCloudModel[ix][iy][iz])
                             for(int i = 0; i < 6; i++){
                                 position neighbour = {ix+SITES_INDEXES[i].x,
@@ -164,16 +185,25 @@ class Cloud{
 
         }
 
+
+
+
 };
 
 
 class Mesh{
+    private:
+        position camera={CAMERA_X,CAMERA_y,CAMERA_Z};
+        position size={SIZE_X, SIZE_Y, SIZE_Z};
+        position center={size.x/2,size.y/2,size.z/2};
     public:
         map<tuple<float,float,float>, int> mp;
         vector<Point*> vertex;
         vector<int> faces;
+
         Mesh(vector<position>& src){
-            int currentIndex = 1;
+            int currentIndex = 0;
+            
             for(position p: src){
                 if(mp.find({p.x,p.y,p.z})==mp.end()){
                     mp.insert({{p.x,p.y,p.z}, currentIndex});
@@ -183,17 +213,21 @@ class Mesh{
                 faces.push_back(mp.find({p.x,p.y,p.z})->second);
             }
 
+            colorize();
         }
 
         void setSmoothVectors(){
             for(int i = 0; i < faces.size(); i+= 4){
                 for(int j = 0; j < 4; j++){
-                    vertex[faces[i+j]-1]->addSmoothVector({vertex[faces[i+(j+1)%4]-1]->getPosition().x,vertex[faces[i+(j+1)%4]-1]->getPosition().y,vertex[faces[i+(j+1)%4]-1]->getPosition().z});
-                    vertex[faces[i+j]-1]->addSmoothVector({vertex[faces[i+(j+3)%4]-1]->getPosition().x,vertex[faces[i+(j+3)%4]-1]->getPosition().y,vertex[faces[i+(j+3)%4]-1]->getPosition().z});
+                    vertex[faces[i+j]]->addSmoothVector({vertex[faces[i+(j+1)%4]]->getPosition().x,vertex[faces[i+(j+1)%4]]->getPosition().y,vertex[faces[i+(j+1)%4]]->getPosition().z});
+                    vertex[faces[i+j]]->addSmoothVector({vertex[faces[i+(j+3)%4]]->getPosition().x,vertex[faces[i+(j+3)%4]]->getPosition().y,vertex[faces[i+(j+3)%4]]->getPosition().z});
                 }
             }
 
         }
+
+
+
 
         void smoothMesh(){
             for(Point* p : vertex)
@@ -205,15 +239,67 @@ class Mesh{
         }
 
 
-        void writeMesh(){
 
-            cout << vertex.size() <<endl;
-            for(Point* p : vertex){
-                fout << "v " << p->getPosition().x << " " << p->getPosition().y << " " << p->getPosition().z << endl;
-               
+
+
+        void colorize(){
+            
+            vector<vector<set<pair<Point*,int>, cmp> > > grid;
+            grid.resize(SIZE_X);
+            for(vector<set<pair<Point*,int>, cmp> >& i : grid)
+                i.resize(SIZE_Y);
+
+            for (Point* v : vertex){
+                pair<int,int> where = v->project(center,camera,-40,30);
+          
+                grid[where.first][where.second].insert({v,
+                        int(sqrt(
+                               pow(v->getPosition().x-camera.x,2)
+                            +  pow(v->getPosition().y-camera.y,2)
+                            +  pow(v->getPosition().z-camera.z,2)
+                        ))
+                });
             }
+
+            for (int i = 1; i < SIZE_X-1; i++)
+                for(int j = 1; j < SIZE_Y-1; j++)
+                    if(!grid[i][j].empty()){
+                    int nearest = grid[i][j].begin()->second;
+                    for(int a : {-1,1}) for(int b : {-1,1})
+                        if(!grid[i+a][j+b].empty())
+                           nearest = min(nearest, grid[i+a][j+b].begin()->second);
+                    for (pair<Point*,int> v:grid[i][j]){
+                            if (v.second-nearest < 7){
+                                v.first->color={0,0,0};
+                            }
+                    }
+
+                }
+            
+
+        }
+
+
+        void writeMesh(){
+            fout << "ply\n";
+            fout << "format ascii 1.0\n";
+            fout << "comment author: Martin Cerveny\n";
+            fout << "element vertex "<< vertex.size() << endl;
+            fout << "property float x\n";
+            fout << "property float y\n";
+            fout << "property float z\n";
+            fout << "property uchar red\n";
+            fout << "property uchar green\n";
+            fout << "property uchar blue\n";
+            fout << "element face " << faces.size()/4 << endl;
+            fout << "property list uchar int vertex_index\n";
+            fout << "end_header\n"; 
+
+            for(Point* p : vertex)
+                fout << p->getPosition().x << " " << p->getPosition().z << " " << p->getPosition().y <<" "<< p->color.x << " " << p->color.y <<" "<< p->color.z << endl;
+               
             for(int i = 0; i < faces.size(); i+=4){
-                fout << "f";
+                fout << "4";
                 for(int j = 0; j < 4; j++)
                     fout << " " << faces[i+j];
                 fout << endl;

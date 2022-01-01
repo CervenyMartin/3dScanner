@@ -1,18 +1,19 @@
 # include<iostream>
-# include<tuple>
-# include<map>
+#include <set>
+#include "points.h"
 using namespace std;
-struct position{
-    int x,y,z;
-};
 
 int main(){
 
-    map<tuple<int,int,int> ,int> mp;
-    tuple<int,int,int> p = {1,2,3};
-    mp.insert({p,4});
-    cout<<"ok";
-
-
+    set<int> s;
+    s.insert(5);
+    s.insert(7);
+    s.insert(2);
+    s.insert(6);
+    s.insert(0);
+    s.insert(3);
+    s.insert(4);
+    for(int k : s)
+        cout << k << endl;
     return  0;
 }
