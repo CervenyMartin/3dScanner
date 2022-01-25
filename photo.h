@@ -16,7 +16,7 @@ class PBMphoto{
             ifstream fin(path);
             fin>> header >> sizeX >> sizeY >> bits;
             for(int y = sizeY-1; y >=0; y--)
-                for(int x = sizeX-1; x >= 0; x--)
+                for(int x = sizeX-1; x>=0; x--)
                     if(bits[sizeX*y+x]=='0') img.push_back(1);
                     else img.push_back(0);
           
@@ -42,7 +42,7 @@ class PPMphoto{
             for(auto& y : img) y.resize(sizeX);
 
             for (int y = sizeY-1; y>=0; y--)
-                for(int x = sizeX-1; x>=0; x--){
+                for(int x = sizeX-1; x>=0;x--){
                     int r,g,b;
                     fin >> r >> g >> b;
                     img[y][x] = {r,g,b};

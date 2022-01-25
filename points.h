@@ -9,10 +9,8 @@ struct position{ float x,y,z;};
 
 class Point{
     private:
-        bool active = 1;
         position coordinates;
         position smoothVector = {0,0,0};
-        
     public:
         position color = {135,95,15};
         Point(float x, float y, float z){
@@ -59,6 +57,7 @@ class Point{
         void resetSmoothVector(){
             smoothVector = {0,0,0};
         }
+       
 
 };
 

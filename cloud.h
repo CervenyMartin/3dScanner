@@ -10,12 +10,12 @@
 
 using namespace std;
 
-#define CAMERA_X 117
-#define CAMERA_y 150
-#define CAMERA_Z 848
-#define SIZE_X 234
-#define SIZE_Y 300
-#define SIZE_Z 234
+#define CAMERA_X 150
+#define CAMERA_y 200
+#define CAMERA_Z 848//638
+#define SIZE_X 300
+#define SIZE_Y 400
+#define SIZE_Z 300
 
 position camera;
 position size;
@@ -192,16 +192,15 @@ class Cloud{
         }
 
 
-        void colorize(float angleX, float angleY){
+        void color(string source, float angleX, float angleY){
             vector<vector<vector<pair<Point*,int> > > > grid;
             grid.resize(SIZE_Y);
             for(vector<vector<pair<Point*,int> > >& i : grid)
                 i.resize(SIZE_X);
-
             for (Point* v : verticies){
-                pair<int,int> where = v->project(center,camera,angleX,angleY);
+                pair<int,int> where = v->project(center,camera,angleX,angleY*(-3.6));
                 if(where.first >= 0 && where.first <SIZE_X && where.second >=0 && where.second <SIZE_Y){
-                    position rotated = v->rotate(center,camera,angleX,angleY);
+                    position rotated = v->rotate(center,camera,angleX,angleY*(-3.6));
                     int dist = sqrt(
                                    pow(rotated.x-camera.x,2)
                                 +  pow(rotated.y-camera.y,2)
@@ -214,8 +213,10 @@ class Cloud{
 
                 }
             }
-            cout << "grid created!" << endl;
-            PPMphoto f("./0.ppm");
+            cout << source+"ppms/"+to_string(int(angleX))+"/"+to_string(int(angleY))+".ppm" << endl;
+            PPMphoto f(source+"ppms/"+to_string(int(angleX))+"/"+to_string(int(angleY))+".ppm");
+            
+            cout << "photo loaded ! " << endl;
             for (int i = 2; i < SIZE_Y-2; i++)
                 for(int j = 2; j < SIZE_X-2; j++)
                     if(!grid[i][j].empty()){

@@ -2,20 +2,19 @@
 #include"cloud.h"
 #include<vector>
 #include<fstream>
-#define IMGSOURCE "./imgs/img1/pbms/"
+#define IMGSOURCE "./imgs/img1/"
 using namespace std;
 
 int main(){
     vector<int> v;
     Cloud c;
-
-    for(int angle : {0,20,40,60})
+    for(int angle : {0})
         for (int i = 0; i < 25; i++){
             cout << angle << ":[" << 4*i << "%]\n";
-            for (int j : {0, 25, 50, 75}){
+            for (int j : {0,25,50,75}){
                 int photo = i + j;
-                string path = IMGSOURCE + to_string(angle)+"/"+to_string(photo)+".pbm";
-                c.crop(path, 3.6*photo,-angle);
+                string path = IMGSOURCE "pbms/"+ to_string(angle)+"/"+to_string(photo)+".pbm";
+                c.crop(path, -3.6*photo,-angle);
             }
         }
 
@@ -26,7 +25,10 @@ int main(){
     for(int i = 0; i < 100; i++)
        c.smoothMesh();
 
-//    m.colorize(0,180);
+    c.color(IMGSOURCE, 0,0);
+    c.color(IMGSOURCE, 0,25);
+    c.color(IMGSOURCE, 0,50);
+    c.color(IMGSOURCE, 0,75);
 
     c.writeMesh();
     cout << "done" << endl;
