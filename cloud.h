@@ -142,8 +142,8 @@ class Cloud{
         void findFaces(){
             cout << cubes.size() << endl;
             int currentIndex = 0;
-//            for(int i = 0; i < 5; i++)
-            //solveSingleCubes();
+            for(int i = 0; i < 5; i++)
+                solveSingleCubes();
             markPTM();
             for (int ix = 0; ix < size.x; ix++)
                 for (int iy = 0; iy < size.y; iy++)
@@ -198,9 +198,9 @@ class Cloud{
             for(vector<vector<pair<Point*,int> > >& i : grid)
                 i.resize(SIZE_X);
             for (Point* v : verticies){
-                pair<int,int> where = v->project(center,camera,angleX,angleY*(-3.6));
+                pair<int,int> where = v->project(center,camera,-angleX,angleY*(-3.6));
                 if(where.first >= 0 && where.first <SIZE_X && where.second >=0 && where.second <SIZE_Y){
-                    position rotated = v->rotate(center,camera,angleX,angleY*(-3.6));
+                    position rotated = v->rotate(center,camera,-angleX,angleY*(-3.6));
                     int dist = sqrt(
                                    pow(rotated.x-camera.x,2)
                                 +  pow(rotated.y-camera.y,2)
@@ -227,18 +227,19 @@ class Cloud{
                     for (pair<Point*,int> v:grid[i][j]){
                             if (v.second-nearest < 6){
                                 array<int,3> col = f.getBitValue(j,i);
-                                v.first->color={float(col[0]),float(col[1]),float(col[2])};
-//                                  v.first->color={0,0,0};
+                                v.first->add2AverageColor({float(col[0]),float(col[1]),float(col[2])});
                             }
                     }
 
                 }
-            
+
 
         }
 
 
         void writeMesh(){
+            for (Point* p: verticies)
+                p->setAverageColor();
             fout << "ply\n";
             fout << "format ascii 1.0\n";
             fout << "comment author: Martin Cerveny\n";

@@ -4,13 +4,19 @@
 using namespace std;
 
 struct position{ float x,y,z;};
-
+#define CAMERA_X 150
+#define CAMERA_Y 200
+#define CAMERA_Z 848//638
+#define SIZE_X 300
+#define SIZE_Y 400
+#define SIZE_Z 300
 
 
 class Point{
     private:
         position coordinates;
         position smoothVector = {0,0,0};
+        int photos2color = 0;
     public:
         position color = {135,95,15};
         Point(float x, float y, float z){
@@ -47,6 +53,23 @@ class Point{
             smoothVector.x += v.x-coordinates.x;
             smoothVector.y += v.y-coordinates.y;
             smoothVector.z += v.z-coordinates.z;
+        }
+
+
+        void add2AverageColor(position col){
+            color.x += col.x;
+            color.y += col.y;
+            color.z += col.z;
+            photos2color++;
+        }
+        void setAverageColor(){
+            if(photos2color==0){
+                color.x = 0; color.y = 0; color.z = 0;
+                return;
+            }
+            color.x = int(color.x/photos2color);
+            color.y = int(color.y/photos2color);
+            color.z = int(color.z/photos2color);
         }
 
         void moveBySmoothVector(){
