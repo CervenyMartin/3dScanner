@@ -4,12 +4,10 @@
 using namespace std;
 
 struct position{ float x,y,z;};
-#define CAMERA_X 150
-#define CAMERA_Y 200
-#define CAMERA_Z 848//638
-#define SIZE_X 300
-#define SIZE_Y 400
-#define SIZE_Z 300
+struct color{int r, g, b;};
+
+
+
 
 
 class Point{
@@ -26,27 +24,27 @@ class Point{
         position getPosition () {return coordinates;}
         
 
-        position rotate(position pc, position cam, float angleX, float angleY){
+        position rotate(position pc, float angleX, float angleZ){
             angleX *= M_PI/180;
-            angleY *= M_PI/180;
+            angleZ *= M_PI/180;
             position trnsfrm;
-            // around y 
-            trnsfrm.x = (coordinates.x-pc.x)*cos(angleY) + (coordinates.z-pc.z)*sin(angleY) + pc.x;
-            trnsfrm.z = (pc.x - coordinates.x)*sin(angleY) + (coordinates.z-pc.z)*cos(angleY) + pc.z;
+            // around z
+            trnsfrm.x = (coordinates.x-pc.x)*cos(angleZ) + (coordinates.y-pc.y)*sin(angleZ) + pc.x;
+            trnsfrm.y = (pc.x - coordinates.x)*sin(angleZ) + (coordinates.y-pc.y)*cos(angleZ) + pc.y;
                         
             // around x
-            trnsfrm.y = (coordinates.y-pc.y)*cos(angleX) + (trnsfrm.z-pc.z)*sin(angleX) + pc.y;
-            trnsfrm.z = (pc.y-coordinates.y)*sin(angleX) + (trnsfrm.z-pc.z) * cos(angleX) + pc.z;
+            trnsfrm.z = (coordinates.z-pc.z)*cos(angleX) + (trnsfrm.y-pc.y)*sin(angleX) + pc.z;
+            trnsfrm.y = (pc.z-coordinates.z)*sin(angleX) + (trnsfrm.y-pc.y) * cos(angleX) + pc.y;
             
             return trnsfrm;
 
         }
 
-        pair<int,int> project(position pc, position cam, float angleX, float angleY){
-            position pos=rotate(pc,cam,angleX,angleY);
-            pos.x = cam.x -(cam.z/(cam.z-pos.z)*(cam.x-pos.x));
-            pos.y = cam.y -(cam.z/(cam.z-pos.z)*(cam.y-pos.y));
-            return {pos.x, pos.y};
+        pair<int,int> project(position pc, position cam, float angleX, float angleZ){
+            position pos=rotate(pc,angleX,angleZ);
+            pos.x = cam.x +(cam.y/(cam.y-pos.y)*(pos.x-cam.x));
+            pos.z = cam.z +(cam.y/(cam.y-pos.y)*(pos.z-cam.z));
+            return {pos.x, pos.z};
         }
 
         void addSmoothVector(position v){ /// v neni vektor, ale koncovy bod vektoru, pocatecni je volany bod!!!

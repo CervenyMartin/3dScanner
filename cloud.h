@@ -10,43 +10,14 @@
 
 using namespace std;
 
-#define CAMERA_X 150
-#define CAMERA_y 200
-#define CAMERA_Z 848//638
-#define SIZE_X 300
-#define SIZE_Y 400
-#define SIZE_Z 300
-
-position camera;
-position size;
-position center;
-ofstream fout("model.ply");
-
-/*                                             7______________6
-    ^ y                                       /.      1      /|
-    |                                        / .            / |
-    |                                       4--.-----------5  |
-    |                                       | 3.       5   | 2|
-    |                                       |  .   4       |  |
-    |                                       |  3...........|..2
-    |                                       | .      0     | /
-    |                                       |.             |/
-    o-------------> x                       0--------------1
-   /
-  /
- /
- z 
-
-*/
-
 const vector<position >  SITES_INDEXES = { {0,-1,0}, {0,1,0}, {1,0,0}, {-1,0,0}, {0,0,-1}, {0,0,1} };
 const vector<vector<position > > SITES_VERTICIES={
-    { {-.5,-.5,-.5}, { .5,-.5,-.5}, { .5,-.5, .5}, {-.5,-.5, .5} }, //0
-    { {-.5, .5,-.5}, { .5, .5,-.5}, { .5, .5, .5}, {-.5, .5, .5} }, //1
-    { { .5,-.5,-.5}, { .5,-.5, .5}, { .5, .5, .5}, { .5, .5,-.5} }, //2
-    { {-.5,-.5,-.5}, {-.5,-.5, .5}, {-.5, .5, .5}, {-.5, .5,-.5} }, //3
-    { {-.5,-.5,-.5}, { .5,-.5,-.5}, { .5, .5,-.5}, {-.5, .5,-.5} }, //4
-    { {-.5,-.5, .5}, { .5,-.5, .5}, { .5, .5, .5}, {-.5, .5, .5} }  //5
+    { {-.5,-.5,-.5}, { .5,-.5,-.5}, { .5,-.5, .5}, {-.5,-.5, .5} },
+    { {-.5, .5,-.5}, { .5, .5,-.5}, { .5, .5, .5}, {-.5, .5, .5} },
+    { { .5,-.5,-.5}, { .5,-.5, .5}, { .5, .5, .5}, { .5, .5,-.5} },
+    { {-.5,-.5,-.5}, {-.5,-.5, .5}, {-.5, .5, .5}, {-.5, .5,-.5} },
+    { {-.5,-.5,-.5}, { .5,-.5,-.5}, { .5, .5,-.5}, {-.5, .5,-.5} },
+    { {-.5,-.5, .5}, { .5,-.5, .5}, { .5, .5, .5}, {-.5, .5, .5} }
 
 };
 
@@ -54,7 +25,6 @@ const vector<vector<position > > SITES_VERTICIES={
 
 class Cloud{
     private:
-        position camera;
         position size;
         position center;
         queue<Point*> cubes;
@@ -63,13 +33,12 @@ class Cloud{
         vector<Point*> verticies;
         vector<int> faces;
     public:
-        Cloud(){            
-            camera={CAMERA_X,CAMERA_y,CAMERA_Z};
-            size={SIZE_X, SIZE_Y, SIZE_Z};
+        Cloud(int sizeX, int sizeY, int sizeZ){            
+            size={float(sizeX), float(sizeY), float(sizeZ)};
             center={size.x/2,size.y/2,size.z/2};
 
-            for(int iy = 0; iy < size.y; iy++)       // pushing cubes into queue
-                for(int ix = 0; ix < size.x; ix++)
+            for(int ix = 0; ix < size.x; ix++)       // pushing cubes into queue
+                for(int iy = 0; iy < size.y; iy++)
                     for(int iz = 0; iz < size.z; iz++){
                         Point* pointerP = new Point(ix,iy,iz);
                         cubes.push(pointerP);
@@ -83,13 +52,14 @@ class Cloud{
             }        
         }
 
-        void crop(string picture, float angleY, float angleX){
+        void crop(string picture, float cameraY, float angleZ, float angleX){
+            position camera={size.x/2, cameraY, size.z/2};
             PBMphoto img(picture);
             Point* sep = new Point(-1,-1,-1);   // separator
             
             cubes.push(sep);
             while(cubes.front()!=sep){
-                pair<int,int> fotoPos = cubes.front()->project(center,camera,angleX,angleY); 
+                pair<int,int> fotoPos = cubes.front()->project(center,camera,angleX,angleZ); 
                 if(img.getBitValue(fotoPos.first,fotoPos.second))
                     cubes.push(cubes.front());
                 
@@ -142,7 +112,7 @@ class Cloud{
         void findFaces(){
             cout << cubes.size() << endl;
             int currentIndex = 0;
-            for(int i = 0; i < 5; i++)
+            for(int i = 0; i < 1; i++)
                 solveSingleCubes();
             markPTM();
             for (int ix = 0; ix < size.x; ix++)
@@ -192,15 +162,16 @@ class Cloud{
         }
 
 
-        void color(string source, float angleX, float angleY){
+        void color(string source, float cameraDist, float angleX, float angleZ){
+            position camera = {size.x/2, cameraDist, size.z/2};
             vector<vector<vector<pair<Point*,int> > > > grid;
-            grid.resize(SIZE_Y);
+            grid.resize(size.z);
             for(vector<vector<pair<Point*,int> > >& i : grid)
-                i.resize(SIZE_X);
+                i.resize(size.x);
             for (Point* v : verticies){
-                pair<int,int> where = v->project(center,camera,-angleX,angleY*(-3.6));
-                if(where.first >= 0 && where.first <SIZE_X && where.second >=0 && where.second <SIZE_Y){
-                    position rotated = v->rotate(center,camera,-angleX,angleY*(-3.6));
+                pair<int,int> where = v->project(center,camera,-angleX,angleZ*(-3.6));
+                if(where.first >= 0 && where.first < size.x && where.second >=0 && where.second < size.z){
+                    position rotated = v->rotate(center,-angleX,angleZ*(-3.6));
                     int dist = sqrt(
                                    pow(rotated.x-camera.x,2)
                                 +  pow(rotated.y-camera.y,2)
@@ -213,12 +184,11 @@ class Cloud{
 
                 }
             }
-            cout << source+"ppms/"+to_string(int(angleX))+"/"+to_string(int(angleY))+".ppm" << endl;
-            PPMphoto f(source+"ppms/"+to_string(int(angleX))+"/"+to_string(int(angleY))+".ppm");
+
+            PPMphoto f(source);
             
-            cout << "photo loaded ! " << endl;
-            for (int i = 2; i < SIZE_Y-2; i++)
-                for(int j = 2; j < SIZE_X-2; j++)
+            for (int i = 2; i < size.z - 2; i++)
+                for(int j = 2; j < size.x - 2; j++)
                     if(!grid[i][j].empty()){
                     int nearest = grid[i][j].begin()->second;
                     for(int a : {-2,-1,1,2}) for(int b : {-2,-1,1,2})
@@ -237,9 +207,12 @@ class Cloud{
         }
 
 
-        void writeMesh(){
+        void writeMesh(string source){
+            ofstream fout(source);
+
             for (Point* p: verticies)
                 p->setAverageColor();
+
             fout << "ply\n";
             fout << "format ascii 1.0\n";
             fout << "comment author: Martin Cerveny\n";
@@ -255,7 +228,7 @@ class Cloud{
             fout << "end_header\n"; 
 
             for(Point* p : verticies)
-                fout << p->getPosition().x << " " << p->getPosition().z << " " << p->getPosition().y <<" "<< p->color.x << " " << p->color.y <<" "<< p->color.z << endl;
+                fout << p->getPosition().x << " " << p->getPosition().y << " " << p->getPosition().z <<" "<< p->color.x << " " << p->color.y <<" "<< p->color.z << endl;
                
             for(int i = 0; i < faces.size(); i+=4){
                 fout << "4";
