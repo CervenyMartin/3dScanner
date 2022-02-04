@@ -7,12 +7,12 @@ using namespace std;
 
 
 int main(){
-    const string IMGSOURCE = "./imgs/img9/";
+    const string IMGSOURCE = "./imgs/img12/";
     ifstream inSize(IMGSOURCE+"/cloudSize");
     int sizeX, sizeY, sizeZ; inSize >> sizeX >> sizeY >> sizeZ;
     cout << sizeX << " " << sizeY << " " << sizeZ << endl;
     Cloud c(sizeX,sizeY,sizeZ);
-    for(int angle : {0,40}){
+    for(int angle : {12,40}){
         ifstream inCamera(IMGSOURCE+to_string(angle)+"/camPos");
         float cameraX,cameraY,cameraZ; inCamera >> cameraX >> cameraY >> cameraZ;
         ifstream inCenter(IMGSOURCE+to_string(angle)+"/cloudCenter");
@@ -38,7 +38,7 @@ int main(){
 
 
 for (int i = 0; i < 100; i++)
-    for(int j : {0,40}){
+    for(int j : {12}){
         ifstream inCamera(IMGSOURCE+to_string(j)+"/camPos");
         float cameraX,cameraY,cameraZ; inCamera >> cameraX >> cameraY >> cameraZ;
         ifstream inCenter(IMGSOURCE+to_string(j)+"/cloudCenter");

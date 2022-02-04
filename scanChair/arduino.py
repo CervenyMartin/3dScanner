@@ -3,13 +3,13 @@ import cv2
 import time
 import numpy as np
 import os
-PATH = "./imgs/img10/20"
+PATH = "./imgs/img12/40"
 SIZE_X=300
 SIZE_Z=400
 
 arduino = serial.Serial(port='/dev/ttyACM0', baudrate=115200, timeout=None)
 currentlyRotated = 0
-cam=cv2.VideoCapture("/dev/video0")
+cam=cv2.VideoCapture("/dev/video2")
 
 def write(x):
     global currentlyRotated

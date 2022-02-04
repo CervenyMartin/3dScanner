@@ -109,7 +109,7 @@ class Cloud{
         void findFaces(){
             cout << cubes.size() << endl;
             int currentIndex = 0;
-            for(int i = 0; i < 5; i++)
+            for(int i = 0; i < 1; i++)
                solveSingleCubes();
             markPTM();
             for (int ix = 0; ix < size.x; ix++)

@@ -3,8 +3,8 @@ import numpy as np
 
 SIZE_X=300
 SIZE_Z=400
-PATH = "./imgs/img10/0"
-cam=cv2.VideoCapture("/dev/video0")
+PATH = "./imgs/img12/40"
+cam=cv2.VideoCapture("/dev/video2")
 
 def storeImg(i):
     l_green = np.array([36,38,59])
