@@ -40,10 +40,14 @@ class Point{
 
         }
 
-        pair<int,int> project(position pc, position cam, float angleX, float angleZ){
+        pair<int,int> project(position pc, position cam, position size, float angleX, float angleZ){
             position pos=rotate(pc,angleX,angleZ);
             pos.x = cam.x +(cam.y/(cam.y-pos.y)*(pos.x-cam.x));
             pos.z = cam.z +(cam.y/(cam.y-pos.y)*(pos.z-cam.z));
+            
+
+            pos.x += size.x/2-cam.x;
+            pos.z += size.z/2-cam.z;
             return {pos.x, pos.z};
         }
 

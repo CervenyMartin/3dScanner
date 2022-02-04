@@ -7,40 +7,46 @@ using namespace std;
 
 
 int main(){
-    const string IMGSOURCE = "./imgs/img1/";
-    ifstream fin(IMGSOURCE+"/cloudSize");
-    int sizeX, sizeY, sizeZ; fin >> sizeX >> sizeY >> sizeZ;
-
+    const string IMGSOURCE = "./imgs/img9/";
+    ifstream inSize(IMGSOURCE+"/cloudSize");
+    int sizeX, sizeY, sizeZ; inSize >> sizeX >> sizeY >> sizeZ;
+    cout << sizeX << " " << sizeY << " " << sizeZ << endl;
     Cloud c(sizeX,sizeY,sizeZ);
-    for(int angle : {0,20,40,60})
-        for (int i = 0; i < 25; i++){
+    for(int angle : {0,40}){
+        ifstream inCamera(IMGSOURCE+to_string(angle)+"/camPos");
+        float cameraX,cameraY,cameraZ; inCamera >> cameraX >> cameraY >> cameraZ;
+        ifstream inCenter(IMGSOURCE+to_string(angle)+"/cloudCenter");
+        float centerX, centerY, centerZ; inCenter >> centerX >> centerY >> centerZ;
+        cout << cameraX << " " << cameraY << " " << cameraZ << "\n";
+        cout << centerX << " " << centerY << " " << centerZ << "\n";
+        for (int i =0 ; i < 25; i++){
             cout << angle << ":[" << 4*i << "%]\n";
             for (int j : {0,25,50,75}){
-                int photo = i + j;
-                string path = IMGSOURCE + to_string(angle)+"/pbm/"+to_string(photo)+".pbm";
-                ifstream fin(IMGSOURCE+to_string(angle)+"/camPos");
-                float cameraDist; fin >> cameraDist; 
-                c.crop(path, cameraDist, -3.6*photo,-angle);
+                int photo = i+ j;
+                string path = IMGSOURCE + to_string(angle)+"/pbm/"+to_string(photo)+".pbm"; 
+                c.crop(path, {cameraX, cameraY, cameraZ},{centerX, centerY, centerZ}, -3.6*(photo),-angle);
             }
         }
+    }
 
     c.findFaces();
 
     
 
-    for(int i = 0; i < 100; i++)
+    for(int i = 0; i < 300; i++)
        c.smoothMesh();
-    
 
-for (int i = 0; i < 100; i+=5)
-    for(int j = 0; j < 80; j+=20){
-        ifstream fin(IMGSOURCE+to_string(j)+"/camPos");
-        float cameraDist; fin >> cameraDist;
+
+for (int i = 0; i < 100; i++)
+    for(int j : {0,40}){
+        ifstream inCamera(IMGSOURCE+to_string(j)+"/camPos");
+        float cameraX,cameraY,cameraZ; inCamera >> cameraX >> cameraY >> cameraZ;
+        ifstream inCenter(IMGSOURCE+to_string(j)+"/cloudCenter");
+        float centerX, centerY, centerZ; inCenter >> centerX >> centerY >> centerZ;
         string source = IMGSOURCE + to_string(j) + "/ppm/" + to_string(i)+".ppm";
-        c.color(source, cameraDist, j,i);
+        c.color(source, {cameraX, cameraY, cameraZ},{centerX, centerY, centerZ}, j,i);
       
     }
-
 
 
     c.writeMesh(IMGSOURCE+"model.ply");

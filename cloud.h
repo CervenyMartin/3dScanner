@@ -26,7 +26,6 @@ const vector<vector<position > > SITES_VERTICIES={
 class Cloud{
     private:
         position size;
-        position center;
         queue<Point*> cubes;
         vector<vector<vector<bool> > > pointCloudModel;
         map<tuple<float,float,float>, int> mp;
@@ -35,8 +34,7 @@ class Cloud{
     public:
         Cloud(int sizeX, int sizeY, int sizeZ){            
             size={float(sizeX), float(sizeY), float(sizeZ)};
-            center={size.x/2,size.y/2,size.z/2};
-
+           
             for(int ix = 0; ix < size.x; ix++)       // pushing cubes into queue
                 for(int iy = 0; iy < size.y; iy++)
                     for(int iz = 0; iz < size.z; iz++){
@@ -52,14 +50,13 @@ class Cloud{
             }        
         }
 
-        void crop(string picture, float cameraY, float angleZ, float angleX){
-            position camera={size.x/2, cameraY, size.z/2};
+        void crop(string picture, position camera, position center, float angleZ, float angleX){
             PBMphoto img(picture);
             Point* sep = new Point(-1,-1,-1);   // separator
             
             cubes.push(sep);
             while(cubes.front()!=sep){
-                pair<int,int> fotoPos = cubes.front()->project(center,camera,angleX,angleZ); 
+                pair<int,int> fotoPos = cubes.front()->project(center,camera,size,angleX,angleZ); 
                 if(img.getBitValue(fotoPos.first,fotoPos.second))
                     cubes.push(cubes.front());
                 
@@ -112,8 +109,8 @@ class Cloud{
         void findFaces(){
             cout << cubes.size() << endl;
             int currentIndex = 0;
-            for(int i = 0; i < 1; i++)
-                solveSingleCubes();
+            for(int i = 0; i < 5; i++)
+               solveSingleCubes();
             markPTM();
             for (int ix = 0; ix < size.x; ix++)
                 for (int iy = 0; iy < size.y; iy++)
@@ -162,14 +159,13 @@ class Cloud{
         }
 
 
-        void color(string source, float cameraDist, float angleX, float angleZ){
-            position camera = {size.x/2, cameraDist, size.z/2};
+        void color(string source, position camera, position center, float angleX, float angleZ){
             vector<vector<vector<pair<Point*,int> > > > grid;
             grid.resize(size.z);
             for(vector<vector<pair<Point*,int> > >& i : grid)
                 i.resize(size.x);
             for (Point* v : verticies){
-                pair<int,int> where = v->project(center,camera,-angleX,angleZ*(-3.6));
+                pair<int,int> where = v->project(center,camera,size,-angleX,angleZ*(-3.6));
                 if(where.first >= 0 && where.first < size.x && where.second >=0 && where.second < size.z){
                     position rotated = v->rotate(center,-angleX,angleZ*(-3.6));
                     int dist = sqrt(
