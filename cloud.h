@@ -6,6 +6,7 @@
 #include<tuple>
 #include<map>
 #include<queue>
+#include<algorithm>
 #include<set>
 
 using namespace std;
@@ -67,11 +68,14 @@ class Cloud{
 
 
         void markPTM(){
-            while (!cubes.empty()){
+            Point* sep = new Point(-1,-1,-1);   // separator
+            cubes.push(sep);
+            while(cubes.front()!=sep){
                 Point* p = cubes.front();
                 pointCloudModel[p->getPosition().x][p->getPosition().y][p->getPosition().z]=true;
                 cubes.pop();
-            }   
+            }
+            cubes.pop();   
         }
 
 
@@ -104,13 +108,58 @@ class Cloud{
                             pointCloudModel[ix][iy][iz] = !pointCloudModel[ix][iy][iz];
                          
         }
+        void decimate(float dist){
+            map<tuple<float,float,float>, int> newMp;
+            vector<Point*> newVerticies;
+            vector<int> newFaces;
+            cout << "sdafa" << endl;
+            vector<vector<vector<vector<Point*> > > > ranges(int(size.x));
+            cout << "mmmmsdfsaf" << endl;
+            for(vector<vector<vector<Point*> > >& a : ranges){
+                a.resize(int(size.y));
+                for (vector<vector<Point*> >& b : a)
+                    b.resize(int(size.z));
 
+            }
+            cout << ranges.size() << " " << ranges[0].size() << " " << ranges[0][0].size() << endl;
+
+            for (Point* p : verticies){
+                cout << "uu"<<endl;
+                ranges[int(p->getPosition().x)][p->getPosition().y][p->getPosition().z].push_back(p);
+            }
+            cout << "sorted" << endl;
+            for(Point* p : verticies){
+                mp[{p->getPosition().x,p->getPosition().y,p->getPosition().z}]=newVerticies.size();
+                newMp.insert({{p->getPosition().x,p->getPosition().y,p->getPosition().z},newVerticies.size()});
+                newVerticies.push_back(p);
+                cout << newVerticies.size() << endl;
+                for (int ix = 0; ix < dist; ix ++)
+                    for(int iy = 0; iy < dist; iy++)
+                        for(int iz = 0; iz < dist; iz++)
+                            for(Point* q : ranges[int(p->getPosition().x)+ix][p->getPosition().y+iy][p->getPosition().z+iz])
+                                if(p->distanceTo(q) < dist)
+                                    mp[{q->getPosition().x,q->getPosition().y,q->getPosition().z}]=mp[{p->getPosition().x,p->getPosition().y,p->getPosition().z}];
+                
+
+            }
+
+            for(int f : faces)
+                newFaces.push_back(newMp[{newVerticies[mp[{verticies[f]->getPosition().x,verticies[f]->getPosition().y,verticies[f]->getPosition().z}]]->getPosition().x,
+                                   newVerticies[mp[{verticies[f]->getPosition().x,verticies[f]->getPosition().y,verticies[f]->getPosition().z}]]->getPosition().y,
+                                   newVerticies[mp[{verticies[f]->getPosition().x,verticies[f]->getPosition().y,verticies[f]->getPosition().z}]]->getPosition().z}]);
+
+            verticies = newVerticies;
+            faces = newFaces;
+            mp = newMp;
+            
+
+        }
 
         void findFaces(){
             cout << cubes.size() << endl;
             int currentIndex = 0;
-            for(int i = 0; i < 1; i++)
-               solveSingleCubes();
+//            for(int i = 0; i < 1; i++)
+  //             solveSingleCubes();
             markPTM();
             for (int ix = 0; ix < size.x; ix++)
                 for (int iy = 0; iy < size.y; iy++)
@@ -203,6 +252,37 @@ class Cloud{
         }
 
 
+        void setNormVects(){
+            cout << verticies[0]->getPosition().x << " " << verticies[0]->getPosition().y << " " << verticies[0]->getPosition().z << endl;
+            for (int i = 0; i < faces.size(); i+=4){
+                Point* one = verticies[i];
+                Point* two = verticies[i+1];
+                Point* three = verticies[i+2];
+                Point* four = verticies[i+3];
+               // cout << one->getPosition().x <<" "<< one ->getPosition().y << " " << one->getPosition().z<<endl;;
+               // cout << two->getPosition().x <<" "<< two ->getPosition().y << " " << two->getPosition().z<<"\n\n";
+                one->setNeighbours(two);
+                two->setNeighbours(one);
+
+                two->setNeighbours(three);
+                three->setNeighbours(two);
+
+                three->setNeighbours(four);
+                four->setNeighbours(three);
+
+                four->setNeighbours(one);
+                one->setNeighbours(four);
+
+            }
+
+
+                position end = verticies[0]->endOfNormVect();
+                cout << end.x << " " << end.y << " " << end.z << endl;
+                
+
+        }
+
+
         void writeMesh(string source){
             ofstream fout(source);
 
@@ -220,7 +300,7 @@ class Cloud{
             fout << "property uchar green\n";
             fout << "property uchar blue\n";
             fout << "element face " << faces.size()/4 << endl;
-            fout << "property list uchar int verticies_index\n";
+            fout << "property list uchar uint vertex_indices\n";
             fout << "end_header\n"; 
 
             for(Point* p : verticies)

@@ -3,7 +3,7 @@ import numpy as np
 
 SIZE_X=300
 SIZE_Z=400
-PATH = "./imgs/img12/40"
+PATH = "./imgs/img14/12"
 cam=cv2.VideoCapture("/dev/video2")
 
 def storeImg(i):

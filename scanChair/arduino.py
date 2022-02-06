@@ -3,7 +3,7 @@ import cv2
 import time
 import numpy as np
 import os
-PATH = "./imgs/img12/40"
+PATH = "./imgs/img30/12"
 SIZE_X=300
 SIZE_Z=400
 
@@ -50,7 +50,7 @@ def storeImg(i):
         file.close()
 
     
-l_green = np.array([36,38,59])
+l_green = np.array([36,71,59])
 u_green = np.array([88,255,205])
 time.sleep(2)
 write("200")

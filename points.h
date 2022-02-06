@@ -3,9 +3,23 @@
 #define SMOOTH_COEFICIENT 100
 using namespace std;
 
-struct position{ float x,y,z;};
+struct position{float x,y,z;};
+
 struct color{int r, g, b;};
 
+struct vect{
+    float x,y,z;
+    float size(){
+        return sqrt(pow(x,2)+pow(y,2)+pow(z,2));
+    }
+    vect times(vect w){
+        vect result;
+        result.x = y*w.z-w.y*z;
+        result.y = z*w.x-w.z*x;
+        result.z = x*w.y-w.x*y;
+        return result;
+    }
+};
 
 
 
@@ -15,6 +29,9 @@ class Point{
         position coordinates;
         position smoothVector = {0,0,0};
         int photos2color = 0;
+        vect neighbourOne={0,0,0};
+        vect neighbourTwo={0,0,0};
+        vect normVekt;
     public:
         position color = {135,95,15};
         Point(float x, float y, float z){
@@ -22,7 +39,10 @@ class Point{
         }
 
         position getPosition () {return coordinates;}
-        
+
+        float distanceTo(Point* i){
+            return sqrt(pow(coordinates.x-i->coordinates.x,2)+pow(coordinates.y-i->coordinates.y,2)+pow(coordinates.z-i->coordinates.z,2));
+        }        
 
         position rotate(position pc, float angleX, float angleZ){
             angleX *= M_PI/180;
@@ -81,6 +101,31 @@ class Point{
         }
         void resetSmoothVector(){
             smoothVector = {0,0,0};
+        }
+
+        void setNeighbours(Point* neighbour){
+            vect newVector;
+            newVector.x = neighbour->coordinates.x-coordinates.x;
+            newVector.y = neighbour->coordinates.y-coordinates.y;
+            newVector.z =  neighbour->coordinates.z-coordinates.z;
+            //cout << newVector.x << " " << newVector.y << " " << newVector.z << endl;
+            if (newVector.size()>neighbourTwo.size()) swap(newVector, neighbourTwo);
+            if (neighbourTwo.size()>neighbourOne.size()) swap(neighbourOne, neighbourTwo);
+
+        }
+
+        
+        position endOfNormVect(){ 
+//            if (neighbourOne.x != 0 && neighbourOne.y !=0 && neighbourOne.z !=0){
+ //           cout << neighbourOne.x << " " << neighbourOne.y << " " << neighbourOne.z<<endl;}
+  //          cout << neighbourTwo.x << " " << neighbourTwo.y << " " << neighbourTwo.z << endl;
+            normVekt = neighbourOne.times(neighbourTwo);
+
+            return {coordinates.x+normVekt.x, coordinates.y+normVekt.y, coordinates.z+normVekt.z};
+        }
+
+        void reverseNormVect(){
+            normVekt.x *= -1; normVekt.y *= -1; normVekt.z *= -1;
         }
        
 
